@@ -24,13 +24,24 @@ namespace ParseAggregateLogFast
     {
         private static void Main(string[] args)
         {
+            //improved version
+            Aggregate();
+
+            //slow version 
+            //ProgramOld.AggregateOld();
+
+            Console.ReadLine();
+        }
+
+        private static void Aggregate()
+        {
             var start = GC.GetAllocatedBytesForCurrentThread();
             int gen0CollectionsAtStart = GC.CollectionCount(0);
 
             var sp = Stopwatch.StartNew();
             string dir_solution = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
             string dir_path = dir_solution + @"\data\";
-            string data_path = dir_path + @"data_min.txt"; //@"data.txt";
+            string data_path = dir_path + @"data_min.txt"; //@"data.txt"; //@"data_min.txt"; 
             string summary_path = dir_path + @"summary.txt";
             string stats_path = dir_path + @"stats.txt"; //statistics file
 
@@ -161,4 +172,69 @@ namespace ParseAggregateLogFast
         }
     }
 
+    internal static class ProgramOld
+    {
+        private class RecordOld
+        {
+            public DateTime Start { get; set; }
+            public DateTime End { get; set; }
+            public long Id { get; set; }
+            public TimeSpan Duration => End - Start;
+        }
+
+        internal static void AggregateOld()
+        {
+            var start = GC.GetAllocatedBytesForCurrentThread();
+            int gen0CollectionsAtStart = GC.CollectionCount(0);
+
+            var sp = Stopwatch.StartNew();
+
+            string dir_solution = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
+            string dir_path = dir_solution + @"\data\";
+            string data_path = dir_path + @"data_min.txt"; //@"data.txt"; //@"data_min.txt";
+            string summary_path = dir_path + @"summary.txt";
+            string stats_path = dir_path + @"stats.txt"; //statistics file
+
+            var summary = from line in File.ReadAllLines(data_path)
+                          let record = new RecordOld
+                          {
+                              Start = DateTime.Parse(line.Split(' ')[0]),
+                              End = DateTime.Parse(line.Split(' ')[1]),
+                              Id = long.Parse(line.Split(' ')[2])
+                          }
+                          group record by record.Id
+                into g
+                          select new
+                          {
+                              Id = g.Key,
+                              Duration = TimeSpan.FromTicks(g.Sum(r => r.Duration.Ticks))
+                          };
+
+            using (var output = File.CreateText(summary_path))
+            {
+                foreach (var entry in summary)
+                {
+                    output.WriteLine($"{entry.Id:D10} {entry.Duration:c}");
+                }
+            }
+
+            var totalAllocated = GC.GetAllocatedBytesForCurrentThread() - start;
+
+            string stats =
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - "
+                    + $"Took: {sp.ElapsedMilliseconds:#,#} ms "
+                    + $"and allocated {totalAllocated / 1024:#,#} kb "
+                    + $"with peak working set of {Process.GetCurrentProcess().PeakWorkingSet64 / 1024:#,#} kb "
+                    + $"and garbage collections {GC.CollectionCount(0) - gen0CollectionsAtStart:#,#}";
+
+            //saving statistics to statistics file
+            using (var output = File.AppendText(stats_path))
+            {
+                output.WriteLine(stats);
+            }
+
+            Console.WriteLine(stats);
+        }
+    }
 }
+
