@@ -39,8 +39,11 @@ namespace ParseAggregateLogFast
             int gen0CollectionsAtStart = GC.CollectionCount(0);
 
             var sp = Stopwatch.StartNew();
+            
+            //set preferred data folder
             string dir_solution = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
             string dir_path = dir_solution + @"\data\";
+
             string data_path = dir_path + @"data_min.txt"; //@"data.txt"; //@"data_min.txt"; 
             string summary_path = dir_path + @"summary.txt";
             string stats_path = dir_path + @"stats.txt"; //statistics file
@@ -189,8 +192,10 @@ namespace ParseAggregateLogFast
 
             var sp = Stopwatch.StartNew();
 
+            //set preferred data folder
             string dir_solution = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
             string dir_path = dir_solution + @"\data\";
+
             string data_path = dir_path + @"data_min.txt"; //@"data.txt"; //@"data_min.txt";
             string summary_path = dir_path + @"summary.txt";
             string stats_path = dir_path + @"stats.txt"; //statistics file
